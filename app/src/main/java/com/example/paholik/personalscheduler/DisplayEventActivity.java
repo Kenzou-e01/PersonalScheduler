@@ -7,8 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -56,18 +54,18 @@ public class DisplayEventActivity extends AppCompatActivity {
             int value = extras.getInt("id");
 
             if(value > 0) { // the view part, not the add event part
-                Log.d("DisplayEventActivity", "value = " + value);
+                LogUtils.d("DisplayEventActivity", "value = " + value);
                 Cursor rs = db.getData(value);
-                Log.d("DisplayEventActivity", "got some values");
+                LogUtils.d("DisplayEventActivity", "got some values");
                 idToUpdate = value;
                 rs.moveToFirst();
-                Log.d("DisplayEventActivity", "moved to first");
+                LogUtils.d("DisplayEventActivity", "moved to first");
 
-                String tit = rs.getString(rs.getColumnIndex(DBHelper.EVENTS_COLUMN_TITLE));
-                String des = rs.getString(rs.getColumnIndex(DBHelper.EVENTS_COLUMN_DESC));
-                String dat = rs.getString(rs.getColumnIndex(DBHelper.EVENTS_COLUMN_TIME));
+                String tit = rs.getString(rs.getColumnIndex(DBHelper.EventTable.EVENTS_COLUMN_TITLE));
+                String des = rs.getString(rs.getColumnIndex(DBHelper.EventTable.EVENTS_COLUMN_DESC));
+                String dat = rs.getString(rs.getColumnIndex(DBHelper.EventTable.EVENTS_COLUMN_DATE));
 
-                Log.d("DisplayEventActivity", "set strings");
+                LogUtils.d("DisplayEventActivity", "set strings");
 
                 if(!rs.isClosed()) {
                     rs.close();
@@ -94,7 +92,6 @@ public class DisplayEventActivity extends AppCompatActivity {
     @SuppressWarnings("deprecation")
     public void setDate(View view) {
         showDialog(999);
-        Toast.makeText(getApplicationContext(), "ca", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -155,7 +152,7 @@ public class DisplayEventActivity extends AppCompatActivity {
                 builder.setMessage(R.string.deleteEvent);
                 builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        db.deleteContact(idToUpdate);
+                        db.deleteEvent(idToUpdate);
                         Toast.makeText(getApplicationContext(), "Deleted successfully", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(getApplicationContext(), MyActivity.class);
                         startActivity(intent);
@@ -183,7 +180,7 @@ public class DisplayEventActivity extends AppCompatActivity {
             int value = extras.getInt("id");
 
             if(value > 0) {
-                Log.d("------- run", "value > 0");
+                LogUtils.d("------- run", "value > 0");
                 if(db.updateEvent(idToUpdate, title.getText().toString(), desc.getText().toString(), date.getText().toString())) {
                     Toast.makeText(getApplicationContext(), "Updated", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(getApplicationContext(), MyActivity.class);
@@ -194,13 +191,13 @@ public class DisplayEventActivity extends AppCompatActivity {
                 }
             }
             else {
-                Log.d("------- run", "value = 0");
+                LogUtils.d("------- run", "value = 0");
                 String t = title.getText().toString();
                 String d = desc.getText().toString();
                 String _date = date.getText().toString();
                 //String t = "tit";
                 //String d = "des";
-                Log.d("------- run", "got title and desc values");
+                LogUtils.d("------- run", "got title and desc values");
                 if(db.insertEvent(t, d, _date)) {
                     Toast.makeText(getApplicationContext(), "Done", Toast.LENGTH_SHORT).show();
                 }

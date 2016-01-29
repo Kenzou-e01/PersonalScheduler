@@ -45,7 +45,7 @@ public class ShowEventsActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 int idToSearch = dbRecords.ids.get(position);
 
-                Log.d("ShowEvents", "id clicked " + idToSearch);
+                LogUtils.d("ShowEvents", "id clicked " + idToSearch);
 
                 Bundle dataBundle = new Bundle();
                 dataBundle.putInt("id", idToSearch);
