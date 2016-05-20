@@ -97,6 +97,10 @@ public class DisplayEventActivity extends AppCompatActivity {
     @Override
     protected Dialog onCreateDialog(int id) {
         if(id == 999) {
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
             return new DatePickerDialog(this, myDateListener, year, month, day);
         }
         return null;

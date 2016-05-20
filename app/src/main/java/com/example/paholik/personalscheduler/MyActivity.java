@@ -9,6 +9,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,32 +33,16 @@ public class MyActivity extends AppCompatActivity {
     private CaldroidFragment caldroidFragment;
     private CaldroidFragment dialogCaldroidFragment;
 
-    private void setCustomResourceForDates() {
+    private DBHelper db;
+    private DBRecords dbRecords;
+
+    private void setCustomResourceForDates(ArrayList<Date> colourDates) {
         /* DBHelper dbHelper = new DBHelper(this);
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.execSQL("DELETE FROM events");
         db.execSQL("ALTER TABLE events ADD COLUMN time TEXT");
         */
 
-        Calendar cal = Calendar.getInstance();
-
-        // Min date is last 7 days
-        cal.add(Calendar.DATE, -7);
-        Date blueDate = cal.getTime();
-
-        // Max date is next 7 days
-        cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, 7);
-        Date greenDate = cal.getTime();
-
-        if (caldroidFragment != null) {
-            caldroidFragment.setBackgroundResourceForDate(R.color.blue,
-                    blueDate);
-            caldroidFragment.setBackgroundResourceForDate(R.color.green,
-                    greenDate);
-            caldroidFragment.setTextColorForDate(R.color.white, blueDate);
-            caldroidFragment.setTextColorForDate(R.color.white, greenDate);
-        }
     }
 
     @Override
@@ -67,57 +52,70 @@ public class MyActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        LogUtils.disableLogs();
+        db = new DBHelper(this);
 
-        final SimpleDateFormat formatter = new SimpleDateFormat("dd MMM yyyy");
+        caldroidInit(savedInstanceState);
+    }
 
-        // Setup caldroid fragment
-        // **** If you want normal CaldroidFragment, use below line ****
+    /**
+     * Save current states of the Caldroid here
+     */
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        // TODO Auto-generated method stub
+        super.onSaveInstanceState(outState);
+
+        if (caldroidFragment != null) {
+            caldroidFragment.saveStatesToKey(outState, "CALDROID_SAVED_STATE");
+        }
+
+        if (dialogCaldroidFragment != null) {
+            dialogCaldroidFragment.saveStatesToKey(outState, "DIALOG_CALDROID_SAVED_STATE");
+        }
+    }
+
+    public void showEvents(View view) {
+        Intent intent = new Intent(this, ShowEventsActivity.class);
+        startActivity(intent);
+    }
+
+    public void caldroidInit(Bundle savedInstanceState) {
         caldroidFragment = new CaldroidFragment();
 
-        // //////////////////////////////////////////////////////////////////////
-        // **** This is to show customized fragment. If you want customized
-        // version, uncomment below line ****
-//		 caldroidFragment = new CaldroidSampleCustomFragment();
-
-        // Setup arguments
-
-        // If Activity is created after rotation
+        // If activity is created after rotation
         if (savedInstanceState != null) {
-            caldroidFragment.restoreStatesFromKey(savedInstanceState,
-                    "CALDROID_SAVED_STATE");
+            caldroidFragment.restoreStatesFromKey(savedInstanceState, "CALDROID_SAVED_STATE");
         }
         // If activity is created from fresh
         else {
             Bundle args = new Bundle();
             Calendar cal = Calendar.getInstance();
+
+            // set calendar preferences
             args.putInt(CaldroidFragment.MONTH, cal.get(Calendar.MONTH) + 1);
             args.putInt(CaldroidFragment.YEAR, cal.get(Calendar.YEAR));
             args.putBoolean(CaldroidFragment.ENABLE_SWIPE, true);
             args.putBoolean(CaldroidFragment.SIX_WEEKS_IN_CALENDAR, true);
-
-            // Uncomment this to customize startDayOfWeek
-            args.putInt(CaldroidFragment.START_DAY_OF_WEEK,
-                    CaldroidFragment.MONDAY); // Tuesday
-
-            // Uncomment this line to use Caldroid in compact mode
+            args.putInt(CaldroidFragment.START_DAY_OF_WEEK, CaldroidFragment.MONDAY); // Tuesday
             args.putBoolean(CaldroidFragment.SQUARE_TEXT_VIEW_CELL, false);
-
-            // Uncomment this line to use dark theme
-//            args.putInt(CaldroidFragment.THEME_RESOURCE, com.caldroid.R.style.CaldroidDefaultDark);
 
             caldroidFragment.setArguments(args);
         }
 
-        setCustomResourceForDates();
-
-        // Attach to the activity
+        // attach calendar to the activity
         FragmentTransaction t = getSupportFragmentManager().beginTransaction();
         t.replace(R.id.calendar1, caldroidFragment);
         t.commit();
 
         // Setup listener
-        final CaldroidListener listener = new CaldroidListener() {
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd MM yyyy");
+        final CaldroidListener listener = (new CaldroidListener() {
+            DBHelper db;
+
+            public CaldroidListener init(DBHelper db) {
+                this.db = db;
+                return this;
+            }
 
             @Override
             public void onSelectDate(Date date, View view) {
@@ -128,6 +126,29 @@ public class MyActivity extends AppCompatActivity {
             public void onChangeMonth(int month, int year) {
                 String text = "month: " + month + " year: " + year;
                 LogUtils.d("onChangeMonth", text);
+                // TODO ziskat z Caldroid aktualne zobrazeny mesiac a rok
+                // get user's events in selected month
+                dbRecords = db.getEventsInMonthYear(month, year);
+
+                LogUtils.d("Main", "year - " + year);
+                LogUtils.d("Main", "month - " + month);
+
+                // TODO prerobit na citatelnejsiu verziu - aby bolo jasne, ze mame zoznam datumov a nie titulkov eventov
+                // toto je realne zoznam datumov, pocas ktorych uz mame v kalendari nejaky event
+                ArrayList<String> dateListStr = dbRecords.titles;
+
+                for(String str : dateListStr) {
+                    String[] splittedDate = str.split("\\.");
+                    int day = Integer.parseInt(splittedDate[0]);
+
+                    Calendar cal = Calendar.getInstance();
+                    cal.set(Calendar.YEAR, year);
+                    cal.set(Calendar.MONTH, month - 1);
+                    cal.set(Calendar.DAY_OF_MONTH, day);
+                    Date dateToBeColoured = cal.getTime();
+                    caldroidFragment.setBackgroundResourceForDate(R.color.blue, dateToBeColoured);
+                    caldroidFragment.setTextColorForDate(R.color.white, dateToBeColoured);
+                }
             }
 
             @Override
@@ -142,16 +163,14 @@ public class MyActivity extends AppCompatActivity {
                 }
             }
 
-        };
-
-        // Setup Caldroid
+        }).init(db);
+        // setup caldroid listener
         caldroidFragment.setCaldroidListener(listener);
 
+        // Customize the calendar
         final TextView textView = (TextView) findViewById(R.id.textView);
-
         final Button customizeButton = (Button) findViewById(R.id.customize_button);
 
-        // Customize the calendar
         customizeButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -234,9 +253,8 @@ public class MyActivity extends AppCompatActivity {
             }
         });
 
-        Button showDialogButton = (Button) findViewById(R.id.show_dialog_button);
-
         final Bundle state = savedInstanceState;
+        Button showDialogButton = (Button) findViewById(R.id.show_dialog_button);
         showDialogButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
@@ -263,32 +281,8 @@ public class MyActivity extends AppCompatActivity {
                     dialogCaldroidFragment.setArguments(bundle);
                 }
 
-                dialogCaldroidFragment.show(getSupportFragmentManager(),
-                        dialogTag);
+                dialogCaldroidFragment.show(getSupportFragmentManager(), dialogTag);
             }
         });
-    }
-
-    /**
-     * Save current states of the Caldroid here
-     */
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        // TODO Auto-generated method stub
-        super.onSaveInstanceState(outState);
-
-        if (caldroidFragment != null) {
-            caldroidFragment.saveStatesToKey(outState, "CALDROID_SAVED_STATE");
-        }
-
-        if (dialogCaldroidFragment != null) {
-            dialogCaldroidFragment.saveStatesToKey(outState,
-                    "DIALOG_CALDROID_SAVED_STATE");
-        }
-    }
-
-    public void showEvents(View view) {
-        Intent intent = new Intent(this, ShowEventsActivity.class);
-        startActivity(intent);
     }
 }

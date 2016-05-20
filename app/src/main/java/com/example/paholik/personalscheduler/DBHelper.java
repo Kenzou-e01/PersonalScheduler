@@ -79,6 +79,8 @@ public class DBHelper extends SQLiteOpenHelper {
         contentValues.put(EventTable.EVENTS_COLUMN_DATE, time);
         db.update(EventTable.EVENTS_TABLE_NAME, contentValues, EventTable._ID + "= ?", new String[] {Integer.toString(id)});
 
+        LogUtils.d("DB", time);
+
         return true;
     }
 
@@ -104,5 +106,31 @@ public class DBHelper extends SQLiteOpenHelper {
         res.close();
 
         return new DBRecords(list_ids, list_titles);
+    }
+
+    public DBRecords getEventsInMonthYear(int month, int year) {
+        String dateInQuery = "%." + month + "." + year;
+
+        LogUtils.d("DBHelper", dateInQuery);
+
+        ArrayList<Integer> listIDs = new ArrayList<>();
+        ArrayList<String> listDates = new ArrayList<>();
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor res = db.rawQuery("SELECT * FROM " + EventTable.EVENTS_TABLE_NAME + " WHERE " + EventTable.EVENTS_COLUMN_DATE + " LIKE '" + dateInQuery +"'", null);
+        res.moveToFirst();
+
+        LogUtils.d("DBHelper", "before while loop");
+
+        while(!res.isAfterLast()) {
+            LogUtils.d("DBHelper", "in loop");
+            listIDs.add(res.getInt(res.getColumnIndex(EventTable._ID)));
+            listDates.add(res.getString(res.getColumnIndex(EventTable.EVENTS_COLUMN_DATE)));
+            res.moveToNext();
+        }
+
+        res.close();
+
+        return new DBRecords(listIDs, listDates);
     }
 }

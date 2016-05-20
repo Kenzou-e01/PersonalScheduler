@@ -23,13 +23,17 @@
             android:label="@string/title_activity_display_message"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".AddEventActivity"
-            android:label="@string/title_activity_add_event"
+            android:name=".ShowHintActivity"
+            android:label="@string/title_activity_show_hint"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".DisplayEventActivity"
             android:label="@string/title_activity_display_event"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Settings"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
