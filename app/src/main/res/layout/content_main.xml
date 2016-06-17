@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.example.paholik.personalscheduler.MyActivity"
-    tools:showIn="@layout/activity_my">
+    tools:context=".MainActivity"
+    tools:showIn="@layout/activity_main">
 
     <RelativeLayout
         android:id="@+id/calendar1"
@@ -47,6 +47,18 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/launchDisplayEvents"
         />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recommend me"
+        android:id="@+id/buttonRecommendEvents"
+        android:onClick="recommendEvents"
+        android:layout_below="@+id/customize_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 
 
 </RelativeLayout>

@@ -1,22 +1,18 @@
 package com.example.paholik.personalscheduler;
 
 
+import android.app.usage.UsageEvents;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.View;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.roomorama.caldroid.CaldroidFragment;
 import com.roomorama.caldroid.CaldroidListener;
@@ -25,34 +21,143 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
-public class MyActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
 
 
     private boolean undo = false;
     private CaldroidFragment caldroidFragment;
     private CaldroidFragment dialogCaldroidFragment;
 
-    private DBHelper db;
-    private DBRecords dbRecords;
+    private Bundle savedInstanceState;
 
-    private void setCustomResourceForDates(ArrayList<Date> colourDates) {
-        /* DBHelper dbHelper = new DBHelper(this);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.execSQL("DELETE FROM events");
-        db.execSQL("ALTER TABLE events ADD COLUMN time TEXT");
-        */
+    private User user;
 
+    void sugarDBInit() {
+        // make app create all used DB tables
+        User.findById(User.class, (long) 1);
+        Tag.findById(Tag.class, (long) 1);
+        UserTag.findById(UserTag.class, (long) 1);
+        UserEvent.findById(UserEvent.class, (long) 1);
+        ExternalEvent.findById(ExternalEvent.class, (long) 1);
+        EventTag.findById(EventTag.class, (long) 1);
+    }
+
+    void importSampleData() {
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yyyy");
+        String formattedDate = df.format(cal.getTime());
+        LogUtils.d("importSampleData", "- date: " + formattedDate);
+
+        EventTag.deleteAll(EventTag.class);
+        ExternalEvent.deleteAll(ExternalEvent.class);
+        Tag.deleteAll(Tag.class);
+        UserEvent.deleteAll(UserEvent.class);
+        UserTag.deleteAll(UserTag.class);
+
+        Tag t1 = new Tag("spolocenstvo");
+        t1.save();
+        Tag t2 = new Tag("efata");
+        t2.save();
+        Tag t3 = new Tag("espe");
+        t3.save();
+        Tag t4 = new Tag("sport");
+        t4.save();
+        Tag t5 = new Tag("rast");
+        t5.save();
+
+        EventTag et1;
+        EventTag et2;
+        EventTag et3;
+
+        cal.set(Calendar.MONTH, 3);
+        cal.set(Calendar.DAY_OF_MONTH, 15);
+        ExternalEvent ee1 = new ExternalEvent("Efata Chvaly PB", "Chvaly v PB", cal.getTime(), cal.getTime(), "Povazska Bystrica");
+        ee1.save();
+        et1 = new EventTag(ee1.getId(), t1.getId());
+        et2 = new EventTag(ee1.getId(), t2.getId());
+        et3 = new EventTag(ee1.getId(), t5.getId());
+        et1.save();
+        et2.save();
+        et3.save();
+
+        cal.set(Calendar.MONTH, 5);
+        cal.set(Calendar.DAY_OF_MONTH, 2);
+        ExternalEvent ee2 = new ExternalEvent("Efata Den spolocenstva PB", "Den spolocenstva Efata", cal.getTime(), cal.getTime(), "Povazska Bystrica");
+        ee2.save();
+        et1 = new EventTag(ee2.getId(), t1.getId());
+        et2 = new EventTag(ee2.getId(), t2.getId());
+        et3 = new EventTag(ee2.getId(), t5.getId());
+        et1.save();
+        et2.save();
+        et3.save();
+
+        cal.set(Calendar.MONTH, 4);
+        cal.set(Calendar.DAY_OF_MONTH, 8);
+        ExternalEvent ee3 = new ExternalEvent("Prednaska Milovat a ctit", "Richard Vasecka na temu Financie v rodine", cal.getTime(), cal.getTime(), "Zilina");
+        ee3.save();
+        et1 = new EventTag(ee3.getId(), t5.getId());
+        et1.save();
+
+        cal.set(Calendar.MONTH, 3);
+        cal.set(Calendar.DAY_OF_MONTH, 15);
+        ExternalEvent ee4 = new ExternalEvent("Zlomeni", "Otvorene stretnutie spolocenstva SP", cal.getTime(), cal.getTime(), "Sliac");
+        ee4.save();
+        et1 = new EventTag(ee4.getId(), t1.getId());
+        et2 = new EventTag(ee4.getId(), t3.getId());
+        et3 = new EventTag(ee4.getId(), t5.getId());
+        et1.save();
+        et2.save();
+        et3.save();
+
+        cal.set(Calendar.MONTH, 7);
+        cal.set(Calendar.DAY_OF_MONTH, 23);
+        ExternalEvent ee5 = new ExternalEvent("Tour de Efata", "Tradicna cyklotura po okoli Povazskej Bystrice", cal.getTime(), cal.getTime(), "Povazska Bystrica a okolie");
+        ee5.save();
+        et1 = new EventTag(ee5.getId(), t1.getId());
+        et2 = new EventTag(ee5.getId(), t2.getId());
+        et3 = new EventTag(ee5.getId(), t4.getId());
+        et1.save();
+        et2.save();
+        et3.save();
+        UserEvent ue = new UserEvent(user.getId(), ee5.getId());
+        ue.save();
+    }
+
+    User getUser() {
+        // currently always returns the same one user (with ID = 1)
+        int userID = 1;
+        User u = User.findById(User.class, userID);
+
+        // if no user with id 'userID' was found
+        if(u == null) {
+            // create new user
+            u = new User("user", "pass", new ArrayList<Tag>());
+            u.save();
+        }
+
+        return u;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_my);
+        this.savedInstanceState = savedInstanceState;
+        setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        db = new DBHelper(this);
+        //init DB
+        sugarDBInit();
+
+        user = getUser();
+        importSampleData();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
 
         caldroidInit(savedInstanceState);
     }
@@ -75,7 +180,16 @@ public class MyActivity extends AppCompatActivity {
     }
 
     public void showEvents(View view) {
-        Intent intent = new Intent(this, ShowEventsActivity.class);
+        // prepare information for MyEventsActivity
+        Intent intent = new Intent(this, MyEventsActivity.class);
+        intent.putExtra(General.ARG_USER_ID, user.getId());
+        startActivity(intent);
+    }
+
+    public void recommendEvents(View view) {
+        // prepare information for MyEventsActivity
+        Intent intent = new Intent(this, RecommendEventsActivity.class);
+        intent.putExtra(General.ARG_USER_ID, user.getId());
         startActivity(intent);
     }
 
@@ -109,45 +223,54 @@ public class MyActivity extends AppCompatActivity {
 
         // Setup listener
         final SimpleDateFormat formatter = new SimpleDateFormat("dd MM yyyy");
-        final CaldroidListener listener = (new CaldroidListener() {
-            DBHelper db;
+        final CaldroidListener listener = new CaldroidListener() {
+            long userID;
 
-            public CaldroidListener init(DBHelper db) {
-                this.db = db;
+            public CaldroidListener init(long _userID) {
+                userID = _userID;
                 return this;
             }
 
             @Override
             public void onSelectDate(Date date, View view) {
                 LogUtils.d("onSelectDate", formatter.format(date));
+                // TODO when date is selected, show events scheduled to this date
             }
 
             @Override
             public void onChangeMonth(int month, int year) {
-                String text = "month: " + month + " year: " + year;
-                LogUtils.d("onChangeMonth", text);
-                // TODO ziskat z Caldroid aktualne zobrazeny mesiac a rok
                 // get user's events in selected month
-                dbRecords = db.getEventsInMonthYear(month, year);
+                List<UserEvent> userEventsList = UserEvent.find(UserEvent.class, "user_ID = ?", Long.toString(userID));
 
-                LogUtils.d("Main", "year - " + year);
-                LogUtils.d("Main", "month - " + month);
+                List<ExternalEvent> externalEventList = ExternalEvent.listAll(ExternalEvent.class);
 
-                // TODO prerobit na citatelnejsiu verziu - aby bolo jasne, ze mame zoznam datumov a nie titulkov eventov
-                // toto je realne zoznam datumov, pocas ktorych uz mame v kalendari nejaky event
-                ArrayList<String> dateListStr = dbRecords.titles;
+                // for each of users events check if they are scheduled for current month
+                for(UserEvent userEvent : userEventsList) {
+                    // find event details by ID
+                    LogUtils.d("onChangeMonth", "- userEvent.eventID: " + userEvent.eventID);
+                    ExternalEvent externalEvent = ExternalEvent.findById(ExternalEvent.class, userEvent.eventID);
 
-                for(String str : dateListStr) {
-                    String[] splittedDate = str.split("\\.");
-                    int day = Integer.parseInt(splittedDate[0]);
+                    if(externalEvent != null) {
+                        Calendar cal = Calendar.getInstance();
+                        cal.setTime(externalEvent.getDateFrom());
+                        int eventMonth = cal.get(Calendar.MONTH) + 1;
+                        int eventDay = cal.get(Calendar.DAY_OF_MONTH);
 
-                    Calendar cal = Calendar.getInstance();
-                    cal.set(Calendar.YEAR, year);
-                    cal.set(Calendar.MONTH, month - 1);
-                    cal.set(Calendar.DAY_OF_MONTH, day);
-                    Date dateToBeColoured = cal.getTime();
-                    caldroidFragment.setBackgroundResourceForDate(R.color.blue, dateToBeColoured);
-                    caldroidFragment.setTextColorForDate(R.color.white, dateToBeColoured);
+                        LogUtils.d("onChangeMonth", "- currentMonth: " + month);
+                        LogUtils.d("onChangeMonth", "- eventMonth: " + eventMonth);
+
+                        // if 'externalEvent' is in selected month
+                        if (month == eventMonth) {
+                            // color field in calendar
+                            cal = Calendar.getInstance();
+                            cal.set(Calendar.YEAR, year);
+                            cal.set(Calendar.MONTH, month - 1);
+                            cal.set(Calendar.DAY_OF_MONTH, eventDay);
+                            Date dateToBeColoured = cal.getTime();
+                            caldroidFragment.setBackgroundResourceForDate(R.color.blue, dateToBeColoured);
+                            caldroidFragment.setTextColorForDate(R.color.white, dateToBeColoured);
+                        }
+                    }
                 }
             }
 
@@ -163,7 +286,7 @@ public class MyActivity extends AppCompatActivity {
                 }
             }
 
-        }).init(db);
+        }.init(user.getId());
         // setup caldroid listener
         caldroidFragment.setCaldroidListener(listener);
 
@@ -284,5 +407,33 @@ public class MyActivity extends AppCompatActivity {
                 dialogCaldroidFragment.show(getSupportFragmentManager(), dialogTag);
             }
         });
+    }
+
+    /**
+     * Create menu with items - Settings, Search
+     * */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main_activity, menu);
+        return true;
+    }
+
+    /**
+     * Handle when menu item is clicked
+     * */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent intent = new Intent(this, SettingsActivity.class);
+                intent.putExtra(General.ARG_USER_ID, user.getId());
+                startActivity(intent);
+                return true;
+            case R.id.action_search:
+                // TODO redirect to Search activity
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }
