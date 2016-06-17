@@ -234,7 +234,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSelectDate(Date date, View view) {
                 LogUtils.d("onSelectDate", formatter.format(date));
-                // TODO when date is selected, show events scheduled to this date
+
+                Intent intent = new Intent(getApplicationContext(), MyEventsActivity.class);
+                intent.putExtra(General.ARG_USER_ID, user.getId());
+                intent.putExtra(General.ARG_SELECT_BY_DATE, true);
+
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(date);
+                String dateString = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH);
+
+                intent.putExtra(General.ARG_SELECTED_DATE, dateString);
+                startActivity(intent);
             }
 
             @Override
@@ -423,14 +433,18 @@ public class MainActivity extends AppCompatActivity {
      * */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent;
+
         switch (item.getItemId()) {
             case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
+                intent = new Intent(this, SettingsActivity.class);
                 intent.putExtra(General.ARG_USER_ID, user.getId());
                 startActivity(intent);
                 return true;
             case R.id.action_search:
-                // TODO redirect to Search activity
+                intent = new Intent(this, SearchActivity.class);
+                intent.putExtra(General.ARG_USER_ID, user.getId());
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

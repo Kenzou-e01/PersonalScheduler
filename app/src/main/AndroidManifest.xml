@@ -43,7 +43,7 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".RecommendEventsActivity"
-            android:label="@string/title_activity_recommend_events" />
+            android:label="@string/title_activity_search" />
         <activity android:name=".SearchActivity"></activity>
     </application>
 

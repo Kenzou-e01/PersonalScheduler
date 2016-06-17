@@ -12,7 +12,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class MyEventsActivity extends AppCompatActivity {
@@ -20,7 +22,8 @@ public class MyEventsActivity extends AppCompatActivity {
     public static final String LOG_TAG = "MyEventsActivity";
     private ListView listView;
     private long userID;
-
+    private boolean selectByDate;
+    private String date;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,27 +33,42 @@ public class MyEventsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         LogUtils.d(LOG_TAG, "got here");
-
-        // get current user ID
-        Bundle extras = getIntent().getExtras();
-        if(extras != null) {
-            userID = extras.getLong(General.ARG_USER_ID);
-            LogUtils.d(LOG_TAG, "- userID: " + userID);
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        List<UserEvent> userEventsList = UserEvent.find(UserEvent.class, "user_ID = ?", Long.toString(userID));
-        ArrayList<ExternalEvent> list = new ArrayList<>();
+        // get current user ID
+        Bundle extras = getIntent().getExtras();
+        if(extras != null) {
+            userID = extras.getLong(General.ARG_USER_ID);
+            selectByDate = extras.getBoolean(General.ARG_SELECT_BY_DATE);
+            if(selectByDate) {
+                date = extras.getString(General.ARG_SELECTED_DATE);
+            }
+            LogUtils.d(LOG_TAG, "- userID: " + userID);
+        }
 
-        for(UserEvent userEvent : userEventsList) {
+        ArrayList<ExternalEvent> list = new ArrayList<>();
+        List<UserEvent> userEventsList = UserEvent.find(UserEvent.class, "user_ID = ?", Long.toString(userID));
+
+        for (UserEvent userEvent : userEventsList) {
             LogUtils.d(LOG_TAG, "- userEventID: " + userEvent.eventID);
             ExternalEvent externalEvent = ExternalEvent.findById(ExternalEvent.class, userEvent.eventID);
-            if(externalEvent != null) {
-                list.add(externalEvent);
+            if (externalEvent != null) {
+                if(selectByDate) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(externalEvent.getDateFrom());
+
+                    String dateString = "" + cal.get(Calendar.YEAR) + cal.get(Calendar.MONTH) + cal.get(Calendar.DAY_OF_MONTH);
+                    if(dateString.equals(date)) {
+                        list.add(externalEvent);
+                    }
+                }
+                else {
+                    list.add(externalEvent);
+                }
             }
         }
 

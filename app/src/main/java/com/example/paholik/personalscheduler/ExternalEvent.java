@@ -36,4 +36,8 @@ public class ExternalEvent extends SugarRecord {
         String formattedDate = df.format(getDateFrom());
         return formattedDate + " " + name;
     }
+
+    public long getTimeFrom() {
+        return dateFrom;
+    }
 }
